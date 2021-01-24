@@ -91,30 +91,13 @@ def deploy_components(windows, canvas) :
         canvas.update()
 
     def plot_text(text, desc, width, height) :
+        global output_label
+        global output_pic
+
         output_label = canvas.create_text(50 + 25 + width +width/2, 40, text=desc)
         output_pic = canvas.create_text(50 + 25 + width + width/2, 50+height/2, text=text)
 
         canvas.update()
-
-    def reload_image(img_array) :
-        global label
-
-        label.pack_forget()
-
-        #Image from Array
-        image = Image.fromarray(utils.rearrange_channel(img_array))
-        width, height = image.size
-        
-        #ImageTk from Image
-        imagetk = ImageTk.PhotoImage(image)
-        
-        #Label from ImageTk
-        label = tk.Label(windows, image=imagetk)
-        label.image = imagetk
-        label.pack()
-        
-        windows.geometry(f"{width}x{height}")
-        return True
 
     def open_file() :
         global img_array
@@ -595,7 +578,6 @@ def deploy_components(windows, canvas) :
         rows, columns, channel = img.shape
 
         pattern = utils.gcd(rows, columns)
-        print(pattern)
 
         for i in range(rows) :
             for j in range(columns) :
@@ -614,7 +596,7 @@ def deploy_components(windows, canvas) :
 
         img = copy.deepcopy(img_array)
         plot_original(img, "Original")
-        rows, columns, shape = img.shape      
+        rows, columns, channel = img.shape      
         width, height = Image.fromarray(img).size
 
         pattern = utils.gcd(rows, columns)
@@ -629,6 +611,59 @@ def deploy_components(windows, canvas) :
                         break
 
         plot_text(message, "Secret Message", width, height)
+
+    def encode_stego_image() :
+        global img_array
+
+        img = copy.deepcopy(img_array)
+        
+        filename = fd.askopenfilename(initialdir="/asset/", 
+                                      title="Choose Image to be Hidden", 
+                                      filetypes=(("PNG Files", "*.png"), ("JPG Files", "*.jpg"), ("All Files", "*.*")))
+        hidden_img = cv2.imread(filename)
+
+        rows, columns, channel = hidden_img.shape
+
+        for i in range(rows) :
+            for j in range(columns) :
+                for ch in range(channel) :
+                    #v1 and v2 are 8-bit pixel values
+                    #of img and hidden_img
+                    v1 = format(img[i][j][ch], '08b')
+                    v2 = format(hidden_img[i][j][ch], '08b')
+
+                    #4 MSBs from each image
+                    v3 = v1[:4] + v2[:4]
+
+                    img[i][j][ch] = int(v3, 2)
+
+        img_array = copy.deepcopy(img)
+        plot_output(img_array, "Image Hidden")
+        return True
+
+    def decode_stego_image() :
+        global img_array
+
+        rows, columns, channel = img_array.shape
+
+        original_image = np.zeros((rows, columns, channel), np.uint8)
+        hidden_image = np.zeros((rows, columns, channel), np.uint8)
+
+        for i in range(rows) :
+            for j in range(columns) :
+                for ch in range(channel) :
+                    v1 = format(img_array[i][j][ch], '08b')
+                    v2 = v1[:4] + chr(random.randint(0, 1)+48) * 4
+                    v3 = v1[4:] + chr(random.randint(0, 1)+48) * 4
+
+                    original_image[i][j][ch] = int(v2, 2)
+                    hidden_image[i][j][ch] = int(v3, 2)
+        
+        img_array = copy.deepcopy(original_image)
+        plot_original(original_image, "Original Image")
+        plot_output(hidden_image, "Hidden Image")
+
+
 
     # Creating Menubar
     menubar = Menu(windows) 
@@ -689,8 +724,8 @@ def deploy_components(windows, canvas) :
     stego.add_cascade(label="Image", menu=img_stego)
 
     text_stego.add_command(label="Encode", command = encode_stego_text)
-    text_stego.add_command(label="Decode", command= decode_stego_text)
-    img_stego.add_command(label="Encode", command = None)
-    img_stego.add_command(label="Decode", command=None)
+    text_stego.add_command(label="Decode", command = decode_stego_text)
+    img_stego.add_command(label="Encode", command = encode_stego_image)
+    img_stego.add_command(label="Decode", command = decode_stego_image)
 
     windows.config(menu = menubar)
