@@ -663,7 +663,28 @@ def deploy_components(windows, canvas) :
         plot_original(original_image, "Original Image")
         plot_output(hidden_image, "Hidden Image")
 
+    def  segmentation_kmeans():
+        global img_array
 
+        img = img_array.reshape(-1, 3)
+        img = np.float32(img)
+
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+
+        # atetempts, k = utils.get_cluster()
+        k = 3
+        attempts = 10
+
+        ret, label, center = cv2.kmeans(img, k, None, criteria, attempts,  cv2.KMEANS_PP_CENTERS )
+        
+        #convert to uint8
+        center = np.uint8(center)
+        res = center[label.flatten()]
+        output = res.reshape((img_array.shape))
+
+        img_array = copy.deepcopy(output)
+        plot_output(output, "K-Means Segmentation")
+        return True
 
     # Creating Menubar
     menubar = Menu(windows) 
@@ -728,4 +749,11 @@ def deploy_components(windows, canvas) :
     img_stego.add_command(label="Encode", command = encode_stego_image)
     img_stego.add_command(label="Decode", command = decode_stego_image)
 
+    segmentation = Menu(edit, tearoff=0)
+    edit.add_cascade(label="Segmentation", menu=segmentation)
+    segmentation.add_command(label="K-Means", command=segmentation_kmeans)
+    segmentation.add_command(label="Split", command=None)
+    segmentation.add_command(label="Merge", command=None)
+    segmentation.add_command(label="Active Contour", command=None)
+    
     windows.config(menu = menubar)
