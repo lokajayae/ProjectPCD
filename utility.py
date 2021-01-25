@@ -20,11 +20,12 @@ the_matrix = [[]]
 message = ""
 attempts = ""
 cluster = ""
+watermark = ""
+opacity = ""
 
 #UTILITY
 def rearrange_channel(img_array) :
-    b, g, r = cv2.split(img_array)
-    return cv2.merge((r, g, b))
+    return cv2.cvtColor(img_array, cv2.COLOR_BGR2RGB)
 
 def get_binary(message):
     for c in message :
@@ -443,7 +444,7 @@ def prompt_message_input(windows) :
     global dialog_box
 
     dialog_box = tk.Toplevel(windows)
-    dialog_box.gemoetry = ("400x400")
+    dialog_box.wm_geometry = ("750x400")
 
     def button_clicked() :
         global message
@@ -457,7 +458,7 @@ def prompt_message_input(windows) :
 
     message_label = tk.Label(dialog_box, text="Message : ")
     message_label.pack()
-    message_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
+    message_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=20)
     message_entry.pack()
 
     #BUTTON
@@ -500,6 +501,47 @@ def prompt_cluster_kmeans(windows) :
     attempts_label.pack()
     attempts_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
     attempts_entry.pack()
+
+    #BUTTON
+    emptyLabel2= tk.Label(dialog_box, text="")
+    emptyLabel2.pack()
+
+    button = tk.Button(dialog_box, text="OK", command=button_clicked)
+    button.pack()
+
+#WATERMARK
+def get_watermark(windows) :
+    prompt_cluster_watermark(windows)
+    windows.wait_window(dialog_box)
+
+    return watermark, int(opacity)
+
+def prompt_cluster_watermark(windows) :
+    global dialog_box
+
+    dialog_box = tk.Toplevel(windows)
+    dialog_box.gemoetry = ("400x400")
+
+    def button_clicked() :
+        global watermark
+        global opacity
+
+        watermark = watermark_entry.get()
+        opacity = opacity_entry.get()
+        dialog_box.destroy()
+
+    #MESSAGE
+    emptyLabel1= tk.Label(dialog_box, text="")
+    emptyLabel1.pack()
+
+    watermark_label = tk.Label(dialog_box, text="Text : ")
+    watermark_label.pack()
+    watermark_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=20)
+    watermark_entry.pack()
+    opacity_label = tk.Label(dialog_box, text="Opacity : ")
+    opacity_label.pack()
+    opacity_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
+    opacity_entry.pack()
 
     #BUTTON
     emptyLabel2= tk.Label(dialog_box, text="")

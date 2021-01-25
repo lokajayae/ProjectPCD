@@ -501,18 +501,22 @@ def deploy_components(windows, canvas) :
 
     def canny():
         global img_array
+        plot_original(img_array, "Original")
+
         if(len(img_array) == 3):
             img = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
         else :
             img = copy.deepcopy(img_array)
         
         lowt, hight = utils.get_canny_input(windows)
-        plot_original(img, "Original")
         img_array = cv2.Canny(img, lowt, hight)
+
         plot_output(img_array, "Canny")
 
     def sobel() :
         global img_array
+        plot_original(img_array, "Original")
+
         scale = 1
         delta = 0
         ddepth = cv2.CV_16S
@@ -533,6 +537,7 @@ def deploy_components(windows, canvas) :
 
     def prewitt():
         global img_array
+        plot_original(img_array, "Original")
 
         if(len(img_array.shape) == 3):
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -549,6 +554,7 @@ def deploy_components(windows, canvas) :
     
     def robert():
         global img_array
+        plot_original(img_array, "Original")
 
         img = cv2.GaussianBlur(img_array, (3, 3), 0)
         if(len(img.shape) == 3):
@@ -564,11 +570,10 @@ def deploy_components(windows, canvas) :
 
     def encode_stego_text() :
         global img_array
+        plot_original(img_array, "Original")
 
         img = copy.deepcopy(img_array)
         output = copy.deepcopy(img_array)
-
-        plot_original(img, "Original")
 
         message = utils.get_message(windows)
         iter_msg = utils.get_binary(message)
@@ -593,9 +598,9 @@ def deploy_components(windows, canvas) :
 
     def decode_stego_text() :
         global img_array
+        plot_original(img_array, "Original")
 
         img = copy.deepcopy(img_array)
-        plot_original(img, "Original")
         rows, columns, channel = img.shape      
         width, height = Image.fromarray(img).size
 
@@ -614,6 +619,7 @@ def deploy_components(windows, canvas) :
 
     def encode_stego_image() :
         global img_array
+        plot_original(img_array, "Original")
 
         img = copy.deepcopy(img_array)
         
@@ -643,6 +649,7 @@ def deploy_components(windows, canvas) :
 
     def decode_stego_image() :
         global img_array
+        plot_original(img_array, "Original")
 
         rows, columns, channel = img_array.shape
 
@@ -663,8 +670,60 @@ def deploy_components(windows, canvas) :
         plot_original(original_image, "Original Image")
         plot_output(hidden_image, "Hidden Image")
 
+    def watermark_image() :
+        #https://www.codespeedy.com/watermark-image-using-opencv-in-python/
+        global img_array
+        plot_original(img_array, "Original")
+
+        img = copy.deepcopy(img_array)
+        rows, columns = img.shape[:2]
+        img = np.dstack([img, np.ones((rows, columns), 'uint8') * 255])
+
+        #open the watermark
+        filename = fd.askopenfilename(initialdir="/asset/", 
+                                      title="Choose Image to be Hidden", 
+                                      filetypes=(("PNG Files", "*.png"), ("JPG Files", "*.jpg"), ("All Files", "*.*")))
+        logo = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+
+        #resizing the watermark
+        scl = 10
+        logo_columns = int((logo.shape[1] * scl/100))
+        logo_rows = int((logo.shape[0] * scl/100))
+
+        watermark = cv2.resize(logo, (logo_columns, logo_rows), interpolation=cv2.INTER_AREA)
+        wm_rows, wm_columns = watermark.shape[:2]
+
+        #Blending
+        ovr = np.zeros((rows, columns, 4), 'uint8')
+        ovr[rows - wm_rows - 60:rows - 60, columns - wm_columns - 10:columns - 10] = watermark
+        
+        output = copy.deepcopy(img)
+        output = cv2.addWeighted(ovr, 0.5, img, 1.0, 0, img)
+
+        img_array = copy.deepcopy(output)
+        plot_output(img_array, "Watermarking Image")
+
+    def watermark_text() :
+        #https://www.life2coding.com/how-to-add-text-watermark-on-images-with-opencv-python/
+        global img_array
+
+        text, opacity = utils.get_watermark(windows)
+        rows, columns = img_array.shape[:2]
+
+        opacity = opacity/100
+        overlay = copy.deepcopy(img_array)
+        output = copy.deepcopy(img_array)
+
+        cv2.putText(overlay, text, (0, int(2 * (columns/3))), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,0,0), 2)
+        cv2.addWeighted(overlay, opacity, output, 1-opacity, 0, output)
+
+        img_array = copy.deepcopy(output)
+        plot_output(img_array, "Watermarking Text")
+        return True
+
     def  segmentation_kmeans():
         global img_array
+        plot_original(img_array, "Original")
 
         img = img_array.reshape(-1, 3)
         img = np.float32(img)
@@ -746,6 +805,11 @@ def deploy_components(windows, canvas) :
     text_stego.add_command(label="Decode", command = decode_stego_text)
     img_stego.add_command(label="Encode", command = encode_stego_image)
     img_stego.add_command(label="Decode", command = decode_stego_image)
+    
+    wm = Menu(edit, tearoff=0)
+    edit.add_cascade(label="Watermark", menu=wm)
+    wm.add_command(label="Text", command=watermark_text)
+    wm.add_command(label="Image", command=watermark_image)
 
     segmentation = Menu(edit, tearoff=0)
     edit.add_cascade(label="Segmentation", menu=segmentation)
