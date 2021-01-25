@@ -18,6 +18,8 @@ matrix_list = []
 intensity = ""
 the_matrix = [[]]
 message = ""
+attempts = ""
+cluster = ""
 
 #UTILITY
 def rearrange_channel(img_array) :
@@ -430,7 +432,7 @@ def prompt_canny_input(windows) :
     button = tk.Button(dialog_box, text="OK", command=button_clicked)
     button.pack()
 
-#OTHER
+#OTHER - TEXT
 def get_message(windows) :
     prompt_message_input(windows)
     windows.wait_window(dialog_box)
@@ -449,7 +451,7 @@ def prompt_message_input(windows) :
         message = message_entry.get()
         dialog_box.destroy()
 
-    #DEPTH
+    #MESSAGE
     emptyLabel1= tk.Label(dialog_box, text="")
     emptyLabel1.pack()
 
@@ -457,6 +459,47 @@ def prompt_message_input(windows) :
     message_label.pack()
     message_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
     message_entry.pack()
+
+    #BUTTON
+    emptyLabel2= tk.Label(dialog_box, text="")
+    emptyLabel2.pack()
+
+    button = tk.Button(dialog_box, text="OK", command=button_clicked)
+    button.pack()
+
+#KMEANS
+def get_cluster(windows) :
+    prompt_cluster_kmeans(windows)
+    windows.wait_window(dialog_box)
+
+    return int(attempts), int(cluster)
+
+def prompt_cluster_kmeans(windows) :
+    global dialog_box
+
+    dialog_box = tk.Toplevel(windows)
+    dialog_box.gemoetry = ("400x400")
+
+    def button_clicked() :
+        global cluster
+        global attempts
+
+        cluster = cluster_entry.get()
+        attempts = attempts_entry.get()
+        dialog_box.destroy()
+
+    #MESSAGE
+    emptyLabel1= tk.Label(dialog_box, text="")
+    emptyLabel1.pack()
+
+    cluster_label = tk.Label(dialog_box, text="Cluster : ")
+    cluster_label.pack()
+    cluster_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
+    cluster_entry.pack()
+    attempts_label = tk.Label(dialog_box, text="Attempts : ")
+    attempts_label.pack()
+    attempts_entry = tk.Entry(dialog_box, font = ('calibre',10,'bold'), width=5)
+    attempts_entry.pack()
 
     #BUTTON
     emptyLabel2= tk.Label(dialog_box, text="")

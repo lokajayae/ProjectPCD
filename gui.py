@@ -671,9 +671,7 @@ def deploy_components(windows, canvas) :
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
 
-        # atetempts, k = utils.get_cluster()
-        k = 3
-        attempts = 10
+        attempts, k = utils.get_cluster(windows)
 
         ret, label, center = cv2.kmeans(img, k, None, criteria, attempts,  cv2.KMEANS_PP_CENTERS )
         
